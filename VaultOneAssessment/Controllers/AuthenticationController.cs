@@ -1,28 +1,42 @@
+using Application.Dtos;
+using Application.Interfaces;
+using Application.Responses;
 using Microsoft.AspNetCore.Mvc;
 
-namespace VaultOneAssessment.Controllers
+namespace WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
     public class AuthenticationController : ControllerBase
     {
         private readonly ILogger<AuthenticationController> _logger;
+        private readonly IAuthenticationService _authService;
 
-        public AuthenticationController(ILogger<AuthenticationController> logger)
+        public AuthenticationController(ILogger<AuthenticationController> logger, IAuthenticationService authService)
         {
+            _authService = authService;
             _logger = logger;
         }
 
-        //[HttpGet(Name = "Login")]
-        //public IEnumerable<WeatherForecast> Get()
-        //{
-        //    return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        //    {
-        //        Date = DateTime.Now.AddDays(index),
-        //        TemperatureC = Random.Shared.Next(-20, 55),
-        //        Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-        //    })
-        //    .ToArray();
-        //}
+       
+        [HttpPost(Name = "Login")] 
+        public async Task<ActionResult<ApiResponse<UserDto>>> Login([FromForm] UserDto auth)
+        {
+            try
+            {
+                var response = await _authService.Login(auth);
+
+                if (!response.Success)
+                {
+                    return StatusCode(response.Code, response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<UserDto>.ErrorResponse();
+            }
+        }
     }
 }
