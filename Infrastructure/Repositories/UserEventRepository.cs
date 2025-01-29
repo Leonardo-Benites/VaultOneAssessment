@@ -27,8 +27,23 @@ namespace Infrastructure.Repositories
         {
             _context.UserEvent.RemoveRange(userEvents);
         }
+
         public async Task SaveChangesAsync()
         {
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteByUserId(int userId)
+        {
+            var userEvents = await _context.UserEvent.Where(ue => ue.UserId == userId).ToListAsync();
+            _context.UserEvent.RemoveRange(userEvents);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteByEventId(int eventId)
+        {
+            var eventUsers = await _context.UserEvent.Where(ue => ue.EventId == eventId).ToListAsync();
+            _context.UserEvent.RemoveRange(eventUsers);
             await _context.SaveChangesAsync();
         }
     }

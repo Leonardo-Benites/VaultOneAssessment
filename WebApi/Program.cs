@@ -49,11 +49,17 @@ builder.Services.AddAuthentication(options =>
     }
 });
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+});
+
 // Register services
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IUserEventService, UserEventService>();
 builder.Services.AddTransient<IAuthenticationService, AuthenticationService>();
 
 builder.Services.AddAutoMapper(typeof(Program));  // AutoMapper configuration
@@ -98,6 +104,7 @@ app.UseCors("AllowLocalhost");
 app.UseRouting();
 app.UseStaticFiles();
 
+app.UseMiddleware<UnauthorizedResponseMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 

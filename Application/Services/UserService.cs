@@ -11,11 +11,14 @@ namespace Application.Services
     public class UserService : IUserService
     {
         private readonly UserRepository _userRepository;
+        private readonly UserEventRepository _userEventRepository;
+
         readonly IMapper _mapper;
 
         public UserService(AppDbContext context, IMapper mapper)
         {
             _userRepository = new UserRepository(context);
+            _userEventRepository = new UserEventRepository(context);
             _mapper = mapper;
         }
 
@@ -23,7 +26,7 @@ namespace Application.Services
         {
             var users = await _userRepository.GetAll();
 
-            if (users is null)
+            if (users == null || !users.Any())
             {
                 return new ApiResponse<IEnumerable<UserDto>>
                 {
@@ -131,9 +134,31 @@ namespace Application.Services
 
             return ApiResponse<UserDto>.SuccessResponse(null, "Usuario atualizado com sucesso");
         }
-        public async Task<ApiResponse<UserDto>> Delete(int id)
+        public async Task<ApiResponse<UserDto>> Delete(int? id)
         {
-            var user = await _userRepository.GetById(id);
+            if (id == null || id == 0)
+            {
+                return new ApiResponse<UserDto>
+                {
+                    Message = $"ID do usuario não foi enviado na requisição, atualize a página e tente novamente.",
+                    Code = 400,
+                    Success = false
+                };
+            }
+
+            var user = await _userRepository.GetById((int)id);
+
+            if (user == null)
+            {
+                return new ApiResponse<UserDto>
+                {
+                    Message = "Usuario não encontrado.",
+                    Code = 404,
+                    Success = false
+                };
+            }
+
+            await _userEventRepository.DeleteByUserId((int)id);
 
             await _userRepository.Delete(user);
 

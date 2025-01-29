@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
@@ -57,7 +58,7 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPost(Name = "Create")]
+        [HttpPost]
         public async Task<ActionResult<ApiResponse<UserDto>>> Create([FromForm] UserDto user)
         {
             try
@@ -78,8 +79,8 @@ namespace WebApi.Controllers
         }
 
         [Authorize]
-        [HttpPut("{id}", Name = "UpdateUser")]
-        public async Task<ActionResult<ApiResponse<UserDto>>> PutUser(int id, [FromForm] UserDto UserDto)
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ApiResponse<UserDto>>> Put(int id, [FromForm] UserDto UserDto)
         {
             try
             {
@@ -99,8 +100,8 @@ namespace WebApi.Controllers
         }
 
         [Authorize]
-        [HttpDelete("{id}", Name = "DeleteUser")]
-        public async Task<ActionResult<ApiResponse<UserDto>>> DeleteUser(int id)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<ApiResponse<UserDto>>> Delete(int? id)
         {
             try
             {

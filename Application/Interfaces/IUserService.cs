@@ -9,6 +9,6 @@ namespace Application.Interfaces
         public Task<ApiResponse<UserDto>> GetById(int id);
         public Task<ApiResponse<UserDto>> Create(UserDto user);
         public Task<ApiResponse<UserDto>> Update(int id, UserDto user);
-        public Task<ApiResponse<UserDto>> Delete(int id);
+        public Task<ApiResponse<UserDto>> Delete(int? id);
     }
 }

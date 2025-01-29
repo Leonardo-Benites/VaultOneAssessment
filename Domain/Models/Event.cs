@@ -9,7 +9,7 @@ namespace Domain.Models
         public string? Description { get; set; }
         public DateTime Date { get; set; }
         public EventType Type { get; set; }
-        public List<string> KeyWords { get; set; } = new List<string>(); 
+        public string? KeyWords { get; set; } 
         public List<string> Guests { get; set; } = new List<string>();
 
         public List<UserEvent> UserEvents { get; set; } = new List<UserEvent>();

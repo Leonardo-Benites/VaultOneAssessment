@@ -11,28 +11,28 @@ namespace Application.Services
     public class EventService : IEventService
     {
         private readonly EventRepository _eventRepository;
-        private readonly UserRepository _userRepository;
+        private readonly UserEventRepository _userEventRepository;
         readonly IMapper _mapper;
         readonly IUserEventService _userEventService;
 
         public EventService(AppDbContext context, IMapper mapper, IUserEventService userEventService)
         {
             _eventRepository = new EventRepository(context);
-            _userRepository = new UserRepository(context);
+            _userEventRepository = new UserEventRepository(context);
             _mapper = mapper;
             _userEventService = userEventService;
         }
 
-        public async Task<ApiResponse<IEnumerable<EventDto>>> GetPublicEvents()
+        public async Task<ApiResponse<IEnumerable<EventDto>>> GetPublicEvents(EventDto eventDto)
         {
-            var events = await _eventRepository.GetPublicEvents();
+            var events = await _eventRepository.GetPublicEvents(eventDto.KeyWords, eventDto.Date);
 
-            if (events is null)
+            if (events is null || !events.Any())
             {
                 return new ApiResponse<IEnumerable<EventDto>>
                 {
                     Data = null,
-                    Message = $"Nenhum evento foi encontrado",
+                    Message = "Nenhum evento foi encontrado com os filtros aplicados.",
                     Code = 404,
                     Success = false
                 };
@@ -43,16 +43,16 @@ namespace Application.Services
             return ApiResponse<EventDto>.SuccessResponseCollection(eventsDto);
         }
 
-        public async Task<ApiResponse<IEnumerable<EventDto>>> GetAll()
+        public async Task<ApiResponse<IEnumerable<EventDto>>> GetEventsByUserId(EventDto eventDto, int userId)
         {
-            var events = await _eventRepository.GetAll();
+            var events = await _eventRepository.GetEventsByUserId(userId, eventDto.KeyWords, eventDto.Date);
 
-            if (events is null)
+            if (events is null || !events.Any())
             {
                 return new ApiResponse<IEnumerable<EventDto>>
                 {
                     Data = null,
-                    Message = $"Nenhum evento foi encontrado",
+                    Message = "Nenhum evento encontrado para este usuário com os filtros aplicados.",
                     Code = 404,
                     Success = false
                 };
@@ -133,11 +133,42 @@ namespace Application.Services
             return ApiResponse<EventDto>.SuccessResponse(null, responseMessage, 201);
         }
 
+        public async Task<ApiResponse<EventDto>> Delete(int? id)
+        {
+            if (id == null || id == 0)
+            {
+                return new ApiResponse<EventDto>
+                {
+                    Message = $"ID do evento não foi enviado na requisição, atualize a página e tente novamente.",
+                    Code = 400,
+                    Success = false
+                };
+            }
+
+            var eventModel = await _eventRepository.GetById((int)id);
+            if (eventModel == null)
+            {
+                return new ApiResponse<EventDto>
+                {
+                    Message = "Evento não encontrado.",
+                    Code = 404,
+                    Success = false
+                };
+            }
+
+            await _userEventRepository.DeleteByEventId((int)id);
+
+            await _eventRepository.Delete(eventModel);
+
+            return ApiResponse<EventDto>.SuccessResponse(null, "Evento deletado com sucesso", 201);
+        }
+
         private bool IsRequiredFieldsFulfilled(EventDto eventDto)
         {
             return !(string.IsNullOrEmpty(eventDto.Name) ||
                 string.IsNullOrEmpty(eventDto.Type) ||
-                string.IsNullOrEmpty(eventDto.Description));
+                string.IsNullOrEmpty(eventDto.Description) ||
+                string.IsNullOrEmpty(eventDto.KeyWords));
         }
     }
 }
