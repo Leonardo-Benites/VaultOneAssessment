@@ -12,9 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VaultOneAssessment.Application\Application.csproj" />
-    <ProjectReference Include="..\VaultOneAssessment.Domain\Domain.csproj" />
-    <ProjectReference Include="..\VaultOneAssessment.Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\Application\Application.csproj" />
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

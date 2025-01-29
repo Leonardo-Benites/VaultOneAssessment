@@ -5,15 +5,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\VaultOneAssessment.Domain\Domain.csproj" />
-    <ProjectReference Include="..\VaultOneAssessment.Infrastructure\Infrastructure.csproj" />
-  </ItemGroup>
 	
    <ItemGroup>
 		<PackageReference Include="AutoMapper" Version="13.0.1" />
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+   </ItemGroup>
+	
+   <ItemGroup>
+     <ProjectReference Include="..\Domain\Domain.csproj" />
+     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
    </ItemGroup>
 
 </Project>
