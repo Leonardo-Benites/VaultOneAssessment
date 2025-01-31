@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.Dtos;
+using Application.Interfaces;
 using Application.Responses;
 using Domain.Models;
 using Infrastructure.Context;
@@ -15,6 +16,29 @@ namespace Application.Services
         public UserEventService(AppDbContext context)
         {
             _userEventRepository = new UserEventRepository(context);
+            _userRepository = new UserRepository(context);
+        }
+
+        public async Task<ApiResponse<List<int>>> GetUserIdsByEventId(int? eventId)
+        {
+            if (eventId == null || eventId == 0)
+            {
+                return new ApiResponse<List<int>>
+                {
+                    Data = null,
+                    Message = "Algo deu errado, o ID do evento não foi informado na Requisição.",
+                    Code = 400,
+                    Success = false
+                };
+            }
+
+            return new ApiResponse<List<int>>
+            {
+                Data = await _userEventRepository.GetUserIdsByEventId((int)eventId),
+                Message = "Busca de usuários vinculados ao evento com sucesso.",
+                Code = 200,
+                Success = true
+            };
         }
 
         public async Task<ApiResponse<bool>> SubscribeUsersOnEventCreate(List<int> userIds, int eventId)
@@ -39,7 +63,8 @@ namespace Application.Services
 
             userEvents.ForEach(userEvent => userEvent.EventId = eventId);
 
-            await _userEventRepository.Insert(userEvents);
+            await _userEventRepository.InsertRange(userEvents);
+            await _userEventRepository.SaveChangesAsync();
 
             return new ApiResponse<bool>
             {
@@ -124,7 +149,7 @@ namespace Application.Services
                     SubscribedDate = DateTime.UtcNow
                 }).ToList();
 
-                await _userEventRepository.Insert(modelAdd);
+                await _userEventRepository.InsertRange(modelAdd);
                 return true;  
             }
 
@@ -147,12 +172,51 @@ namespace Application.Services
                     SubscribedDate = DateTime.UtcNow
                 }).ToList();
 
-                await _userEventRepository.Remove(modelRemove);
+                await _userEventRepository.RemoveRange(modelRemove);
                 return true; 
             }
 
             return false;  
         }
+
+        public async Task<ApiResponse<EventDto>> Subscribe(int? eventId, int userId)
+        {
+            if (eventId == null || eventId == 0)
+            {
+                return new ApiResponse<EventDto>
+                {
+                    Message = $"ID do evento não foi enviado na requisição, atualize a página e tente novamente.",
+                    Code = 400,
+                    Success = false
+                };
+            }
+
+            var model = new UserEvent() { EventId = (int)eventId, UserId = userId };
+
+            await _userEventRepository.Insert(model);
+
+            return ApiResponse<EventDto>.SuccessResponse(null, "Inscrição no evento realizada com sucesso", 201);
+        }
+
+        public async Task<ApiResponse<EventDto>> Unsubscribe(int? eventId, int userId)
+        {
+            if (eventId == null || eventId == 0)
+            {
+                return new ApiResponse<EventDto>
+                {
+                    Message = $"ID do evento não foi enviado na requisição, atualize a página e tente novamente.",
+                    Code = 400,
+                    Success = false
+                };
+            }
+
+            var model = new UserEvent() { EventId = (int)eventId, UserId = userId };
+
+            await _userEventRepository.Remove(model);
+
+            return ApiResponse<EventDto>.SuccessResponse(null, "Desinscrição no evento realizada com sucesso", 201);
+        }
+
 
     }
 }

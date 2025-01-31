@@ -8,23 +8,132 @@ using System.Security.Claims;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("Api/[controller]")]
     [ApiController]
     public class EventController : ControllerBase
     {
         private readonly IEventService _eventService;
+        private readonly IUserEventService _userEventService;
 
-        public EventController(IEventService eventService)
+        public EventController(IEventService eventService, IUserEventService userEventService)
         {
             _eventService = eventService;
+            _userEventService = userEventService;
         }
 
-        [HttpGet(Name = "GetPublicEvents")]
-        public async Task<ActionResult<ApiResponse<EventDto>>> GetPublicEvents([FromQuery] EventDto eventDto)
+        [HttpGet("GetPublicEvents")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<EventDto>>>> GetPublicEvents([FromQuery] EventDto eventDto)
         {
             try
             {
                 var response = await _eventService.GetPublicEvents(eventDto);
+
+                if (!response.Success)
+                {
+                    return StatusCode(response.Code, response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<IEnumerable<EventDto>>.ErrorResponse();
+            }
+        }
+
+        [Authorize]
+        [HttpGet("GetMyEventsAndPublic")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<EventDto>>>> GetMyEventsAndPublic([FromQuery] EventDto eventDto)
+        {
+            try
+            {
+                var userId = User.Claims.FirstOrDefault().Value;
+
+                var response = await _eventService.GetEventsByUserId(eventDto, Convert.ToInt32(userId));
+
+                if (!response.Success)
+                {
+                    return StatusCode(response.Code, response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<IEnumerable<EventDto>>.ErrorResponse();
+            }
+        }
+
+        [Authorize]
+        [HttpGet("GetUserIdsByEventId/{eventId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<EventDto>>>> GetUserIdsByEventId([FromQuery] int? eventId)
+        {
+            try
+            {
+                var response = await _userEventService.GetUserIdsByEventId(eventId);
+
+                if (!response.Success)
+                {
+                    return StatusCode(response.Code, response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<IEnumerable<EventDto>>.ErrorResponse();
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("Create")]
+        public async Task<ActionResult<ApiResponse<EventDto>>> Create([FromBody] EventDto eventDto)
+        {
+            try
+            {
+                var response = await _eventService.Create(eventDto);
+
+                if (!response.Success)
+                {
+                    return StatusCode(response.Code, response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<EventDto>.ErrorResponse();
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("Update/{id}")]
+        public async Task<ActionResult<ApiResponse<EventDto>>> Update(int id, [FromBody] EventDto eventDto)
+        {
+            try
+            {
+                var response = await _eventService.Update(id, eventDto);
+
+                if (!response.Success)
+                {
+                    return StatusCode(response.Code, response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<EventDto>.ErrorResponse();
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("Delete/{id}")]
+        public async Task<ActionResult<ApiResponse<EventDto>>> Delete(int? id)
+        {
+            try
+            {
+                var response = await _eventService.Delete(id);
 
                 if (!response.Success)
                 {
@@ -40,12 +149,14 @@ namespace WebApi.Controllers
         }
 
         [Authorize]
-        [HttpGet("{id}", Name = "GetMyEvents")]
-        public async Task<ActionResult<ApiResponse<EventDto>>> GetEventsByUserId(int userId, [FromQuery] EventDto eventDto)
+        [HttpDelete("Subscribe")]
+        public async Task<ActionResult<ApiResponse<EventDto>>> Subscribe(int? eventId)
         {
             try
             {
-                var response = await _eventService.GetEventsByUserId(eventDto, userId);
+                var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+                var response = await _userEventService.Subscribe(eventId, Convert.ToInt32(userId));
 
                 if (!response.Success)
                 {
@@ -60,60 +171,15 @@ namespace WebApi.Controllers
             }
         }
 
-
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        public async Task<ActionResult<ApiResponse<EventDto>>> Create([FromForm] EventDto eventDto, List<int> userIds)
+        [Authorize]
+        [HttpDelete("Unsubscribe")]
+        public async Task<ActionResult<ApiResponse<EventDto>>> Unsubscribe(int? eventId)
         {
             try
             {
-                var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub); // User ID from the token
-                var userEmail = User.FindFirstValue(JwtRegisteredClaimNames.Email); // User email from the token
-                var userRole = User.FindFirstValue(ClaimTypes.Role); // User role from the token
+                var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-                var response = await _eventService.Create(eventDto, userIds);
-
-                if (!response.Success)
-                {
-                    return StatusCode(response.Code, response);
-                }
-
-                return Ok(response);
-            }
-            catch (Exception)
-            {
-                return ApiResponse<EventDto>.ErrorResponse();
-            }
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<EventDto>>> Update(int id, [FromForm] EventDto eventDto, List<int> userIds)
-        {
-            try
-            {
-                var response = await _eventService.Update(id, eventDto, userIds);
-
-                if (!response.Success)
-                {
-                    return StatusCode(response.Code, response);
-                }
-
-                return Ok(response);
-            }
-            catch (Exception)
-            {
-                return ApiResponse<EventDto>.ErrorResponse();
-            }
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<EventDto>>> Delete(int? id)
-        {
-            try
-            {
-                var response = await _eventService.Delete(id);
+                var response = await _userEventService.Unsubscribe(eventId, Convert.ToInt32(userId));
 
                 if (!response.Success)
                 {
