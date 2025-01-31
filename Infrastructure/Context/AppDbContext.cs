@@ -30,17 +30,17 @@ namespace Infrastructure.Context
 
             modelBuilder.Entity<User>()
                 .Property(u => u.Email)
-                .HasMaxLength(25)
+                .HasMaxLength(40)
                 .IsRequired();
 
             modelBuilder.Entity<User>()
                 .Property(u => u.Password)
-                .HasMaxLength(25)
+                .HasMaxLength(255)
                 .IsRequired();
 
             modelBuilder.Entity<User>()
                 .Property(u => u.Profile)
-                .HasMaxLength(25);
+                .IsRequired();
         }
 
         private void ConfigureEvent(ModelBuilder modelBuilder)

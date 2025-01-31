@@ -1,4 +1,6 @@
-﻿namespace Domain.Models
+﻿using Domain.Enums;
+
+namespace Domain.Models
 {
     public class User
     {
@@ -6,8 +8,8 @@
         public string? Name { get; set; }
         public string? Email { get; set; }
         public string? Password { get; set; }
-        public string? Profile { get; set; }
+        public UserProfile Profile { get; set; }
+        public ICollection<UserEvent>? UserEvents { get; set; }
 
-        public List<UserEvent> UserEvents { get; set; } = new List<UserEvent>();
     }
 }

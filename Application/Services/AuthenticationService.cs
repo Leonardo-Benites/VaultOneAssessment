@@ -25,11 +25,11 @@ namespace Application.Services
             _configuration = configuration;
         }
 
-        public async Task<ApiResponse<UserDto>> Login(UserDto userDto)
+        public async Task<ApiResponse<AuthDto>> Login(AuthDto authDto)
         {
-            if (string.IsNullOrEmpty(userDto.Email))
+            if (string.IsNullOrEmpty(authDto.Email))
             {
-                return new ApiResponse<UserDto>
+                return new ApiResponse<AuthDto>
                 {
                     Data = null,
                     Message = $"Informe o email para realizar o login.",
@@ -38,9 +38,9 @@ namespace Application.Services
                 };
             }
 
-            if (string.IsNullOrEmpty(userDto.Password))
+            if (string.IsNullOrEmpty(authDto.Password))
             {
-                return new ApiResponse<UserDto>
+                return new ApiResponse<AuthDto>
                 {
                     Data = null,
                     Message = $"Informe a senha para realizar o login.",
@@ -49,11 +49,11 @@ namespace Application.Services
                 };
             }
 
-            var user = await _userRepository.GetByEmail(userDto.Email);
+            var user = await _userRepository.GetByEmail(authDto.Email);
 
             if (user is null)
             {
-                return new ApiResponse<UserDto>
+                return new ApiResponse<AuthDto>
                 {
                     Data = null,
                     Message = $"Não foi possível encontrar seu usuário, verifique o e-mail informado.",
@@ -62,9 +62,9 @@ namespace Application.Services
                 };
             }
 
-            if (!BCrypt.Net.BCrypt.Verify(userDto.Password, user.Password))
+            if (!BCrypt.Net.BCrypt.Verify(authDto.Password, user.Password))
             {
-                return new ApiResponse<UserDto>
+                return new ApiResponse<AuthDto>
                 {
                     Data = null,
                     Message = $"Usuário ou senha inválidos, verifique os dados informados e tente novamente.",
@@ -73,9 +73,11 @@ namespace Application.Services
                 };
             }
 
+            var userDto = _mapper.Map<UserDto>(user);
+
             var token = GenerateJwtToken(userDto);
 
-            return ApiResponse<UserDto>.SuccessResponse(userDto, token);
+            return ApiResponse<AuthDto>.SuccessResponse(authDto, "Autenticação realizada com sucesso.", 201,  token);
         }
 
         public string GenerateJwtToken(UserDto user)
@@ -83,14 +85,16 @@ namespace Application.Services
             var jwtSettings = _configuration.GetSection("JwtSettings");
 
             var claims = new List<Claim>
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Profile),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Profile.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
+            var authenticationKey = Environment.GetEnvironmentVariable("AUTH_KEY");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authenticationKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(

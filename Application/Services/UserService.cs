@@ -128,7 +128,9 @@ namespace Application.Services
                 };
             }
 
-            model = _mapper.Map<User>(dto);
+            //opção de alterar senha e email seria implementado posteriormente.
+            model.Name = dto.Name;
+            model.Profile = dto.Profile;
 
             await _userRepository.Update(model);
 
@@ -165,12 +167,13 @@ namespace Application.Services
             return ApiResponse<UserDto>.SuccessResponse(null, "Usuario deletado com sucesso");
         }
 
+        //TODO: VERIFICAR COMO VALIDAR PROFILE 
+
         private bool IsRequiredFieldsFulfilled(UserDto UserDto)
         {
             return !(string.IsNullOrEmpty(UserDto.Name) ||
                 string.IsNullOrEmpty(UserDto.Email) ||
-                string.IsNullOrEmpty(UserDto.Password) ||
-                string.IsNullOrEmpty(UserDto.Profile));
+                string.IsNullOrEmpty(UserDto.Password));
         }
 
         private string GenerateHashPassword(string password)

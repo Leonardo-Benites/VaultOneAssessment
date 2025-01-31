@@ -14,14 +14,12 @@ namespace Infrastructure.Repositories
 
         public async Task<IEnumerable<User>> GetAll()
         {
-            return await _context.User.ToListAsync();
+            return await _context.User.AsNoTracking().ToListAsync();
         }
 
         public async Task<IEnumerable<User>> GetByIds(List<int> userIds)
         {
-            return await _context.User
-                .Where(u => userIds.Contains(u.Id))
-                .ToListAsync();
+            return await _context.User.AsNoTracking().Where(u => userIds.Contains(u.Id)).ToListAsync();
         }
 
         public async Task<User> GetByEmail(string email)

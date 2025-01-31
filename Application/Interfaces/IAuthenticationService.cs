@@ -10,7 +10,7 @@ namespace Application.Interfaces
 {
     public interface IAuthenticationService
     {
-        public Task<ApiResponse<UserDto>> Login(UserDto dto);
+        public Task<ApiResponse<AuthDto>> Login(AuthDto dto);
         public string GenerateJwtToken(UserDto user);
     }
 }

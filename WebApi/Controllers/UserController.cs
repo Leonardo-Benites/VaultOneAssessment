@@ -6,8 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
 {
-    [Authorize]
-    [Route("api/[controller]")]
+    [Route("Api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -17,8 +16,8 @@ namespace WebApi.Controllers
             _userService = userService;
         }
 
-        [Authorize]
-        [HttpGet(Name = "GetUsers")]
+        [Authorize(Roles = "Admin")]
+        [HttpGet("GetUsers")]
         public async Task<ActionResult<ApiResponse<UserDto>>> GetUsers()
         {
             try
@@ -37,8 +36,8 @@ namespace WebApi.Controllers
             }
         }
 
-        [Authorize]
-        [HttpGet("{id}", Name = "GetUser")]
+        [Authorize(Roles = "Admin")]
+        [HttpGet("GetUser/{id}")]
         public async Task<ActionResult<ApiResponse<UserDto>>> GetUser(int id)
         {
             try
@@ -58,8 +57,8 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<ActionResult<ApiResponse<UserDto>>> Create([FromForm] UserDto user)
+        [HttpPost("Create")]
+        public async Task<ActionResult<ApiResponse<UserDto>>> Create([FromBody] UserDto user)
         {
             try
             {
@@ -72,15 +71,15 @@ namespace WebApi.Controllers
 
                 return Ok(response);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return ApiResponse<UserDto>.ErrorResponse();
             }
         }
 
-        [Authorize]
-        [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<UserDto>>> Put(int id, [FromForm] UserDto UserDto)
+        [Authorize(Roles = "Admin")]
+        [HttpPut("Update/{id}")]
+        public async Task<ActionResult<ApiResponse<UserDto>>> Put(int id, [FromBody] UserDto UserDto)
         {
             try
             {
@@ -99,8 +98,8 @@ namespace WebApi.Controllers
             }
         }
 
-        [Authorize]
-        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("Delete/{id}")]
         public async Task<ActionResult<ApiResponse<UserDto>>> Delete(int? id)
         {
             try

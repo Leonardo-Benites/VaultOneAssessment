@@ -59,11 +59,18 @@ namespace Application.Services
             }
 
             var eventsDto = _mapper.Map<IEnumerable<EventDto>>(events);
+            foreach (var dto in eventsDto)
+            {
+                var userIds = events.FirstOrDefault(e => e.Id == dto.Id)?
+                    .UserEvents?.Select(ue => ue.UserId).ToList() ?? new List<int>();
+
+                dto.UserIds = userIds;
+            }
 
             return ApiResponse<EventDto>.SuccessResponseCollection(eventsDto);
         }
 
-        public async Task<ApiResponse<EventDto>> Create(EventDto dto, List<int> userIds)
+        public async Task<ApiResponse<EventDto>> Create(EventDto dto)
         {
             if (!IsRequiredFieldsFulfilled(dto))
             {
@@ -81,9 +88,9 @@ namespace Application.Services
 
             string warningMessage = "";
 
-            if (userIds != null || userIds.Any())
+            if (dto.UserIds != null || dto.UserIds.Any())
             {
-                var subscribeResult = await _userEventService.SubscribeUsersOnEventCreate(userIds, eventModel.Id);
+                var subscribeResult = await _userEventService.SubscribeUsersOnEventCreate(dto.UserIds, eventModel.Id);
                 if (!subscribeResult.Success)
                     warningMessage = subscribeResult.Message;
             }
@@ -93,7 +100,7 @@ namespace Application.Services
             return ApiResponse<EventDto>.SuccessResponse(null, responseMessage, 201);
         }
 
-        public async Task<ApiResponse<EventDto>> Update(int eventId, EventDto eventDto, List<int> userIds)
+        public async Task<ApiResponse<EventDto>> Update(int eventId, EventDto eventDto)
         {
             if (eventId != eventDto.Id)
             {
@@ -121,9 +128,9 @@ namespace Application.Services
 
             string warningMessage = "";
 
-            if (userIds != null || userIds.Any())
+            if (eventDto.UserIds != null || eventDto.UserIds.Any())
             {
-                var subscribeResult = await _userEventService.SubscribeUsersOnEventUpdate(userIds, model.Id);
+                var subscribeResult = await _userEventService.SubscribeUsersOnEventUpdate(eventDto.UserIds, model.Id);
                 if (!subscribeResult.Success)
                     warningMessage = subscribeResult.Message;
             }
@@ -163,10 +170,10 @@ namespace Application.Services
             return ApiResponse<EventDto>.SuccessResponse(null, "Evento deletado com sucesso", 201);
         }
 
+              //TODO: VERIFICAR COMO VALIDAR TYPE
         private bool IsRequiredFieldsFulfilled(EventDto eventDto)
         {
             return !(string.IsNullOrEmpty(eventDto.Name) ||
-                string.IsNullOrEmpty(eventDto.Type) ||
                 string.IsNullOrEmpty(eventDto.Description) ||
                 string.IsNullOrEmpty(eventDto.KeyWords));
         }

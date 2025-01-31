@@ -18,12 +18,24 @@ namespace Infrastructure.Repositories
             return await _context.UserEvent.Select(ue => ue.UserId).ToListAsync();
         }
 
-        public async Task Insert(List<UserEvent> userEvents)
+        public async Task Insert(UserEvent userEvent)
+        {
+            await _context.UserEvent.AddAsync(userEvent);
+            await _context.SaveChangesAsync();
+
+        }
+        public async Task Remove(UserEvent userEvent)
+        {
+            _context.UserEvent.Remove(userEvent);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task InsertRange(List<UserEvent> userEvents)
         {
             await _context.UserEvent.AddRangeAsync(userEvents);
         }
 
-        public async Task Remove(List<UserEvent> userEvents)
+        public async Task RemoveRange(List<UserEvent> userEvents)
         {
             _context.UserEvent.RemoveRange(userEvents);
         }
